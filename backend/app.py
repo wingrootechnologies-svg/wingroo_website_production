@@ -124,13 +124,19 @@ def create_app():
                     for col_name, col_sql in [
                         ("branch", "branch VARCHAR(50) DEFAULT '100ft'"),
                         ("reporting_time", "reporting_time VARCHAR(30) DEFAULT '11:00 AM'"),
-                        ("internship_mode", "internship_mode VARCHAR(20) DEFAULT 'Offline'")
+                        ("internship_mode", "internship_mode VARCHAR(20) DEFAULT 'Offline'"),
+                        ("duration", "duration VARCHAR(60) DEFAULT '15 Days Internship Program'"),
                     ]:
                         try:
                             conn.execute(db.text(f"ALTER TABLE {tbl} ADD COLUMN {col_sql}"))
                             conn.commit()
                         except Exception:
                             pass
+                    try:
+                        conn.execute(db.text(f"UPDATE {tbl} SET duration = '15 Days Internship Program' WHERE duration IS NULL OR duration = ''"))
+                        conn.commit()
+                    except Exception:
+                        pass
             # Ensure default administrator exists
             admin_user = User.query.filter_by(role='ADMIN').first()
             if not admin_user:
