@@ -12,7 +12,7 @@ const isLocal =
 
 const baseURL = isLocal
   ? "/api"
-  : (import.meta.env.VITE_API_BASE_URL || (API_BASE_URL ? `${API_BASE_URL}/api` : "http://localhost:5000/api"));
+  : (import.meta.env.VITE_API_BASE_URL || (API_BASE_URL ? `${API_BASE_URL}/api` : "https://backend.wingrootechnologies.com/api"));
 export const api = axios.create({ baseURL, timeout: 20000 });
 let refreshRequest = null;
 export function clearSession() {
