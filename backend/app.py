@@ -65,8 +65,10 @@ def create_app():
 
     CORS(app, resources={
         r"/api/*": {"origins": cors_origins},
+        r"/public/*": {"origins": cors_origins},
         r"/uploads/*": {"origins": cors_origins},
-        r"/media/*": {"origins": cors_origins}
+        r"/media/*": {"origins": cors_origins},
+        r"/*": {"origins": cors_origins}
     }, methods=['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], supports_credentials=True)
 
     # Register Blueprints
@@ -82,13 +84,21 @@ def create_app():
     app.register_blueprint(cert_admin_bp)
     app.register_blueprint(public_bp)
 
-    @app.route('/api/health', methods=['GET'])
+    @app.route('/', methods=['GET', 'HEAD', 'OPTIONS'])
+    @app.route('/health', methods=['GET', 'HEAD', 'OPTIONS'])
+    @app.route('/healthcheck', methods=['GET', 'HEAD', 'OPTIONS'])
+    @app.route('/api/health', methods=['GET', 'HEAD', 'OPTIONS'])
     def health_check():
         return jsonify({
             'status': 'healthy',
             'service': 'Wingroo Technologies Backend API',
-            'version': '1.0.0'
-        })
+            'version': '1.0.0',
+            'message': 'Wingroo Technologies Backend is running operational'
+        }), 200
+
+    @app.route('/favicon.ico', methods=['GET', 'HEAD'])
+    def favicon():
+        return '', 204
 
     # Initialize tables and seed default admin
     with app.app_context():
@@ -102,6 +112,28 @@ def create_app():
                 for col_def in ["active_session_id VARCHAR(100) DEFAULT NULL", "active_session_time DATETIME DEFAULT NULL"]:
                     try:
                         conn.execute(db.text(f"ALTER TABLE accounts_user ADD COLUMN {col_def}"))
+                        conn.commit()
+                    except Exception:
+                        pass
+                try:
+                    conn.execute(db.text("ALTER TABLE accounts_studentprofile ADD COLUMN initial_password VARCHAR(255) DEFAULT NULL"))
+                    conn.commit()
+                except Exception:
+                    pass
+                for tbl in ["accounts_studentprofile", "internships_internship"]:
+                    for col_name, col_sql in [
+                        ("branch", "branch VARCHAR(50) DEFAULT '100ft'"),
+                        ("reporting_time", "reporting_time VARCHAR(30) DEFAULT '11:00 AM'"),
+                        ("internship_mode", "internship_mode VARCHAR(20) DEFAULT 'Offline'"),
+                        ("duration", "duration VARCHAR(60) DEFAULT '15 Days Internship Program'"),
+                    ]:
+                        try:
+                            conn.execute(db.text(f"ALTER TABLE {tbl} ADD COLUMN {col_sql}"))
+                            conn.commit()
+                        except Exception:
+                            pass
+                    try:
+                        conn.execute(db.text(f"UPDATE {tbl} SET duration = '15 Days Internship Program' WHERE duration IS NULL OR duration = ''"))
                         conn.commit()
                     except Exception:
                         pass
